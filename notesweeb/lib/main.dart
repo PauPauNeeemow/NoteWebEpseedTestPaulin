@@ -61,12 +61,13 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           Positioned(
             bottom: 0,
-            left: 0,
+            left: 29,
             right: MediaQuery.of(context).size.width / 2.5,
             child: Visibility(
               visible: true,
               child: Container(
-                height: 400,
+                height: 369,
+                width: 182,
                 color: Color.fromRGBO(255, 255, 254, 1.0),
                 child: Center(
                   child: Text(
@@ -78,66 +79,26 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           Positioned(
-            bottom: 0,
-            left: MediaQuery.of(context).size.width / 2,
-            right: 0,
-            child: Visibility(
-              visible: false,
-              child: Container(
-                height: 150,
-                color: Colors.green,
-                child: Center(
-                  child: Text(
-                    'Div 1.1',
-                    style: TextStyle(color: Color.fromRGBO(0, 0, 0, 1.0)),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: MediaQuery.of(context).size.width / 2,
-            child: Visibility(
-              visible: false,
-              child: Container(
-                height: 150,
-                color: Colors.blue,
-                child: Center(
-                  child: Text(
-                    'Div 2',
-                    style: TextStyle(color: Color.fromRGBO(0, 0, 0, 1.0)),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
             top: 0,
             left: MediaQuery.of(context).size.width / 2.5,
-            right: 0,
+            right: 45,
             child: Visibility(
               visible: true,
               child: Container(
-                height: 400,
+                height: 317,
+                width: 143,
                 color: Color.fromRGBO(255, 255, 254, 1.0),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Text(
-                      //   'Div 2.1',
-                      //   style: TextStyle(color: Color.fromRGBO(0, 0, 0, 1.0)),
-                      // ),
-                      SizedBox(height: 20), // Espacement entre le texte et l'image
-                      Image.asset('assets/images/AccueilImage1.png', // Remplacez par le chemin de votre image
-                        width: 100, // Ajustez la largeur selon vos besoins
-                        height: 100, // Ajustez la hauteur selon vos besoins
-                        fit: BoxFit.cover, // Ajustez le mode de remplissage de l'image
-                      ),
-                    ],
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Image.asset(
+                      'assets/images/AccueilImage1.png',
+                      width: 143,
+                      height: 55,
+                      fit: BoxFit.cover,
+                    ),
+                  ],
                 ),
               ),
             ),
