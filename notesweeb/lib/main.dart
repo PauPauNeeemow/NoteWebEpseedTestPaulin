@@ -98,6 +98,20 @@ class _MyHomePageState extends State<MyHomePage> {
                       height: 55,
                       fit: BoxFit.cover,
                     ),
+                    SizedBox(height: 40), // Espacement entre l'image et le texte
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 30),
+                        child: Text(
+                          "Bienvenue sur notre plateforme de prise de notes, l'endroit idéal pour capturer, organiser et donner vie à toutes vos idées, pensées et inspirations. Que vous soyez un professionnel cherchant à structurer vos projets ou un créatif désirant garder une trace de ses pensées, vous êtes au bon endroit ! \nIci, vous trouverez un espace accueillant et intuitif pour consigner vos idées, listes, croquis et bien plus encore. Que ce soit sur votre ordinateur, votre tablette ou votre téléphone, notre interface conviviale vous permettra de noter rapidement vos pensées, de les organiser efficacement et de les retrouver facilement quand vous en aurez besoin.",
+                          style: TextStyle(
+                            fontSize: 6.5,
+                            fontFamily: 'Nunito',
+                            color: Color.fromRGBO(30, 30, 30, 1.0),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
