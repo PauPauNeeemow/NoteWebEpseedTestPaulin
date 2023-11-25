@@ -123,9 +123,20 @@ class _MyHomePageState extends State<MyHomePage> {
                 height: 400,
                 color: Color.fromRGBO(255, 255, 254, 1.0),
                 child: Center(
-                  child: Text(
-                    'Div 2.1',
-                    style: TextStyle(color: Color.fromRGBO(0, 0, 0, 1.0)),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Text(
+                      //   'Div 2.1',
+                      //   style: TextStyle(color: Color.fromRGBO(0, 0, 0, 1.0)),
+                      // ),
+                      SizedBox(height: 20), // Espacement entre le texte et l'image
+                      Image.asset('assets/images/AccueilImage1.png', // Remplacez par le chemin de votre image
+                        width: 100, // Ajustez la largeur selon vos besoins
+                        height: 100, // Ajustez la hauteur selon vos besoins
+                        fit: BoxFit.cover, // Ajustez le mode de remplissage de l'image
+                      ),
+                    ],
                   ),
                 ),
               ),
