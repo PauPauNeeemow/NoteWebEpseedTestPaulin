@@ -24,15 +24,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -40,16 +31,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool isVisible = true;
+  
   int counter = 0;
 
-  void incrementCounter() {
+  void hidePositioned() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      counter++;
+      isVisible = false;
     });
   }
 
@@ -78,41 +66,66 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          Positioned(
-            top: 0,
-            left: MediaQuery.of(context).size.width / 2.5,
-            right: 45,
-            child: Visibility(
-              visible: true,
+          AnimatedPositioned(
+          duration: Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          top: isVisible ? 0 : -MediaQuery.of(context).size.height,
+          left: MediaQuery.of(context).size.width / 2.5,
+          right: 45,
+          child: Visibility(
+            visible: isVisible,
+            child: GestureDetector(
+              onTap: () {
+                hidePositioned();
+              },
               child: Container(
                 height: 317,
                 width: 143,
                 color: Color.fromRGBO(255, 255, 254, 1.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Image.asset(
-                      'assets/images/AccueilImage1.png',
-                      width: 143,
-                      height: 55,
-                      fit: BoxFit.cover,
-                    ),
-                    SizedBox(height: 40), // Espacement entre l'image et le texte
-                    Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 30),
-                        child: Text(
-                          "Bienvenue sur notre plateforme de prise de notes, l'endroit idéal pour capturer, organiser et donner vie à toutes vos idées, pensées et inspirations. Que vous soyez un professionnel cherchant à structurer vos projets ou un créatif désirant garder une trace de ses pensées, vous êtes au bon endroit ! \nIci, vous trouverez un espace accueillant et intuitif pour consigner vos idées, listes, croquis et bien plus encore. Que ce soit sur votre ordinateur, votre tablette ou votre téléphone, notre interface conviviale vous permettra de noter rapidement vos pensées, de les organiser efficacement et de les retrouver facilement quand vous en aurez besoin.",
-                          style: TextStyle(
-                            fontSize: 6.5,
-                            fontFamily: 'Nunito',
-                            color: Color.fromRGBO(30, 30, 30, 1.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Image.asset(
+                        'assets/images/AccueilImage1.png',
+                        width: 143,
+                        height: 55,
+                        fit: BoxFit.cover,
+                      ),
+                      SizedBox(height: 20),
+                      Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 30),
+                          child: Text(
+                            "Bienvenue sur notre plateforme de prise de notes, l'endroit idéal pour capturer, organiser et donner vie à toutes vos idées, pensées et inspirations. Que vous soyez un professionnel cherchant à structurer vos projets ou un créatif désirant garder une trace de ses pensées, vous êtes au bon endroit ! \nIci, vous trouverez un espace accueillant et intuitif pour consigner vos idées, listes, croquis et bien plus encore. Que ce soit sur votre ordinateur, votre tablette ou votre téléphone, notre interface conviviale vous permettra de noter rapidement vos pensées, de les organiser efficacement et de les retrouver facilement quand vous en aurez besoin.",
+                            style: TextStyle(
+                              fontSize: 6.5,
+                              fontFamily: 'Nunito',
+                              color: Color.fromRGBO(30, 30, 30, 1.0),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 5,horizontal: 30),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            hidePositioned();
+                          },
+                          child: Text(
+                            'Get Started',
+                            style: TextStyle(color: Color.fromRGBO(0, 0, 0, 1.0),fontFamily: 'Nunito',fontSize: 10),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color.fromRGBO(255, 210, 82, 1.0),
+                            minimumSize: Size(91, 26),
+                            maximumSize: Size(91, 26),
+                            shape: StadiumBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
