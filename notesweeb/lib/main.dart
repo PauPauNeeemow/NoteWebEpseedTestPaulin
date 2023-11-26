@@ -140,22 +140,29 @@ class _MyHomePageState extends State<MyHomePage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Row(
-                    //mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
                         height: 851,
                         width: 316,
                         padding: EdgeInsets.all(8),
                         margin: EdgeInsets.only(right: 100),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.black,
-                            width: 1,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 5,horizontal: 30),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              hidePositioned();
+                            },
+                            child: Text(
+                              'Get Started',
+                              style: TextStyle(color: Color.fromRGBO(0, 0, 0, 1.0),fontFamily: 'Nunito',fontSize: 10),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color.fromRGBO(255, 210, 82, 1.0),
+                              minimumSize: Size(91, 26),
+                              maximumSize: Size(91, 26),
+                              shape: StadiumBorder(),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          'Div 1',
-                          style: TextStyle(color: Color.fromRGBO(0, 0, 0, 1.0)),
                         ),
                       ),
                       Container(
@@ -163,31 +170,54 @@ class _MyHomePageState extends State<MyHomePage> {
                         width: 786,
                         padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.black,
-                              width: 1,
-                            ),
-                          ),
-                        child: Column(
-                          children: List.generate(
-                            2,
-                            (index) => Container(
-                              height: 150,
-                              width: 125,
-                              margin: EdgeInsets.only(bottom: 8),
-                              color: _randomColor.randomColor(),
-                              child: TextField(
-                                decoration: InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.all(0),
-                                  hintText: 'Write here...',
-                                ),
-                                style: TextStyle(fontSize: 12), // Taille de police plus petite
-                              ),
-                            ),
+                          border: Border.all(
+                            color: Colors.black,
+                            width: 1,
                           ),
                         ),
-                      ),
+                        child: Stack(
+                          children: [
+                            for (int i = 0; i < notes.length; i++)
+                              Positioned(
+                                left: notes[i].x,
+                                top: notes[i].y,
+                                child: Draggable(
+                                  childWhenDragging: Container(),
+                                  feedback: Container(
+                                    height: 150,
+                                    width: 125,
+                                    color: _randomColor.randomColor(),
+                                    child: TextField(
+                                      decoration: InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.all(8),
+                                        hintText: notes[i].content,
+                                      ),
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                  child: Container(
+                                    height: 150,
+                                    width: 125,
+                                    margin: EdgeInsets.only(bottom: 8),
+                                    color: _randomColor.randomColor(),
+                                    child: TextField(
+                                      decoration: InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.all(8),
+                                        hintText: notes[i].content,
+                                      ),
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                  onDraggableCanceled: (_, offset) {
+                                    moveNote(i, offset.dx, offset.dy);
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      )
                     ],
                   ),
                 ],
@@ -281,7 +311,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Row(
-                    //mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
                         height: 851,
@@ -323,7 +352,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   contentPadding: EdgeInsets.all(0),
                                   hintText: 'Write here...',
                                 ),
-                                style: TextStyle(fontSize: 12), // Taille de police plus petite
+                                style: TextStyle(fontSize: 12),
                               ),
                             ),
                           ),
@@ -429,18 +458,22 @@ class _MyHomePageState extends State<MyHomePage> {
                           left: 2,
                         ),
                         child: Container(
-                          height: 189,
+                          height: 50,
                           width: 78,
                           padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.black,
-                              width: 1,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              addNoteAtPosition(5,5);
+                            },
+                            child: Text(
+                              'Add notes',
+                              style: TextStyle(color: Color.fromRGBO(0, 0, 0, 1.0), fontFamily: 'Nunito', fontSize: 10),
                             ),
-                          ),
-                          child: Text(
-                            'Div 1',
-                            style: TextStyle(color: Color.fromRGBO(0, 0, 0, 1.0)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color.fromRGBO(255, 210, 82, 1.0),
+                              padding: EdgeInsets.zero,
+                              shape: StadiumBorder(),
+                            ),
                           ),
                         ),
                       ),
@@ -450,7 +483,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         padding: EdgeInsets.all(8),
                         child: Column(
                           children: List.generate(
-                            2,
+                            notes.length,
                             (index) => Container(
                               height: 100,
                               width: 75,
@@ -462,7 +495,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                   contentPadding: EdgeInsets.all(8),
                                   hintText: 'Write here...',
                                 ),
-                                style: TextStyle(fontSize: 10), // Taille de police plus petite
+                                style: TextStyle(fontSize: 10),
+                                controller: TextEditingController(text: notes[index].content),
+                                onChanged: (text) {
+                                  setState(() {
+                                    notes[index].content = text;
+                                  });
+                                },
                               ),
                             ),
                           ),
