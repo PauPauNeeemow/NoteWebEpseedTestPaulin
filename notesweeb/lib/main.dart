@@ -1,6 +1,8 @@
+import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:random_color/random_color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math';
 
 void main() {
   runApp(const MyApp());
@@ -31,12 +33,119 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class Note {
-  final String id;
-  Offset position;
-  Color backgroundColor;
+class ResizableNote extends StatefulWidget {
+  final Note note;
 
-  Note({required this.id, required this.position, required this.backgroundColor});
+  const ResizableNote({Key? key, required this.note}) : super(key: key);
+
+  @override
+  _ResizableNoteState createState() => _ResizableNoteState();
+}
+
+class _ResizableNoteState extends State<ResizableNote> {
+  Offset position = Offset(20, 20);
+  double _width = 150;
+  double _height = 100;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: position.dx,
+      top: position.dy,
+      child: GestureDetector(
+        onPanUpdate: (details) {
+          setState(() {
+            position = Offset(
+              position.dx + details.delta.dx,
+              position.dy + details.delta.dy,
+            );
+          });
+        },
+        child: GestureDetector(
+          onScaleUpdate: (details) {
+            setState(() {
+              _width = 150 * details.scale;
+              _height = 100 * details.scale;
+            });
+          },
+          child: Container(
+            width: _width,
+            height: _height,
+            decoration: BoxDecoration(
+              color: widget.note.backgroundColor,
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: Center(
+              child: Text(widget.note.text),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class Offset {
+  final double dx;
+  final double dy;
+
+  Offset(this.dx, this.dy);
+
+  Map<String, dynamic> toJson() {
+    return {
+      'dx': dx,
+      'dy': dy,
+    };
+  }
+}
+
+class OffsetSerializer {
+  static Map<String, dynamic> toJson(Offset offset) {
+    return {
+      'dx': offset.dx,
+      'dy': offset.dy,
+    };
+  }
+
+  static Offset fromJson(Map<String, dynamic> json) {
+    return Offset(json['dx'] ?? 0.0, json['dy'] ?? 0.0);
+  }
+}
+
+class Note {
+  String id;
+  Offset position;
+  late Color backgroundColor;
+  late String text;
+
+  Note({required this.id, required this.position, required this.text}) {
+    backgroundColor = _randomColor();
+  }
+
+  Color _randomColor() {
+    Random random = Random();
+    return Color.fromRGBO(
+      random.nextInt(256),
+      random.nextInt(256),
+      random.nextInt(256),
+      1.0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'position': OffsetSerializer.toJson(position),
+      'backgroundColor': backgroundColor.toString(),
+      'text': text,
+    };
+  }
+
+  Note.fromJson(Map<String, dynamic> json)
+      : id = json['id'],
+        position = Offset(json['position']['dx'], json['position']['dy']),
+        backgroundColor = Color(json['backgroundColor']),
+        text = json['text'];
 }
 
 class _MyHomePageState extends State<MyHomePage> {
@@ -44,10 +153,8 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isVisible2 = false;
   bool premiereColonneRemplie = false;
 
-  List<String> notes = [];
+  List<Note> notes = [];
   TextEditingController noteController = TextEditingController();
-
-  RandomColor _randomColor = RandomColor();
   
   int counter = 0;
 
@@ -59,14 +166,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void loadNotes() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      notes = prefs.getStringList('notes') ?? [];
-    });
+    final List<String>? notesStringList = prefs.getStringList('notes');
+
+    if (notesStringList != null) {
+      setState(() {
+        notes = notesStringList.map((noteString) {
+          Map<String, dynamic> noteMap = jsonDecode(noteString);
+          return Note.fromJson(noteMap);
+        }).toList();
+      });
+    }
   }
 
   void saveNotes() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList('notes', notes);
+
+    List<String> notesStringList = notes.map((note) {
+      return jsonEncode(note.toJson());
+    }).toList();
+
+    prefs.setStringList('notes', notesStringList);
   }
 
   void hidePositioned() {
@@ -95,6 +214,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildDesktopLayout() {
+    double screenWidth = MediaQuery.of(context).size.width;
+
     return Stack(
       children: [
         Positioned(
@@ -127,8 +248,14 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: ElevatedButton(
                             onPressed: () {
                               setState(() {
-                                notes.add('Nouvelle note');
-                                saveNotes();
+                                notes.add(
+                                  Note(
+                                    id: 'Nouvelle note',
+                                    position: Offset(5.5, 5.5),
+                                    text: 'Contenu de la note'
+                                  )
+                                );
+                                saveNotes();    
                               });
                             },
                             child: Text(
@@ -144,62 +271,82 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                       ),
                       Container(
-                        height: 360,
+                        height: 800,
                         width: 1400,
                         padding: EdgeInsets.all(8),
                         child: ReorderableListView.builder(
                           itemCount: notes.length,
                           itemBuilder: (context, index) {
-                            TextEditingController noteController = TextEditingController(text: notes[index]);
+                            Note note = notes[index];
+                            TextEditingController noteController = TextEditingController(text: note.id);
 
-                            return Container(
+                            return Draggable(
                               key: Key('$index'),
-                              decoration: BoxDecoration(
-                                color: _randomColor.randomColor(),
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              padding: EdgeInsets.all(12),
-                              margin: EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: noteController,
-                                      onChanged: (value) {
-                                        notes[index] = value;
-                                        saveNotes();
-                                      },
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        color: Colors.black,
+                              child: Material(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: note.backgroundColor,
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                  padding: EdgeInsets.all(12),
+                                  margin: EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: noteController,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              note.id = value;
+                                              saveNotes();
+                                            });
+                                          },
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            color: Colors.black,
+                                          ),
+                                          maxLines: null,
+                                          textAlign: TextAlign.start,
+                                          decoration: InputDecoration(
+                                            border: InputBorder.none,
+                                            hintText: 'Ecrire ici...',
+                                            contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+                                          ),
+                                        ),
                                       ),
-                                      maxLines: null,
-                                      textAlign: TextAlign.start,
-                                      decoration: InputDecoration(
-                                        border: InputBorder.none,
-                                        hintText: 'Ecrire ici...',
-                                        contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+                                      SizedBox(
+                                        width: 20,
+                                        child: IconButton(
+                                          icon: Icon(Icons.delete, size: 20),
+                                          onPressed: () {
+                                            setState(() {
+                                              notes.removeAt(index);
+                                              saveNotes();
+                                            });
+                                          },
+                                        ),
                                       ),
-                                    ),
+                                      ReorderableDragStartListener(
+                                        index: index,
+                                        child: Icon(Icons.drag_handle, size: 20),
+                                      ),
+                                    ],
                                   ),
-                                  SizedBox(
-                                    width: 20,
-                                    child: IconButton(
-                                      icon: Icon(Icons.delete, size: 20),
-                                      onPressed: () {
-                                        setState(() {
-                                          notes.removeAt(index);
-                                          saveNotes();
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  ReorderableDragStartListener(
-                                    index: index,
-                                    child: Icon(Icons.drag_handle, size: 20),
-                                  ),
-                                ],
+                                ),
                               ),
+                              feedback: Material(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: note.backgroundColor.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                  padding: EdgeInsets.all(12),
+                                  child: Text(note.id),
+                                ),
+                              ),
+                              onDraggableCanceled: (velocity, offset) {
+                                // Mettez à jour la position de la note ici si nécessaire
+                              },
                             );
                           },
                           onReorder: (oldIndex, newIndex) {
@@ -213,7 +360,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             });
                           },
                         ),
-                      ),
+                      )
                     ],
                   ),
                 ],
@@ -233,7 +380,7 @@ class _MyHomePageState extends State<MyHomePage> {
               hidePositioned();
             },
             child: Container(
-              height: 390,
+              height: screenWidth > 500 ? 709 : 100,
               width: 239,
               color: Color.fromRGBO(255, 255, 254, 1.0),
                 child: Column(
@@ -284,6 +431,8 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ),
+        for (final note in notes)
+        ResizableNote(note: note),
       ],
     );
   }
@@ -321,7 +470,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: ElevatedButton(
                             onPressed: () {
                               setState(() {
-                                notes.add('Nouvelle note');
+                                notes.add(
+                                  Note(
+                                    id: 'Nouvelle note',
+                                    position: Offset(5.5, 5.5),
+                                    text: 'Contenu de la note'));
                                 saveNotes();
                               });
                             },
@@ -341,14 +494,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         height: 851,
                         width: 1000,
                         padding: EdgeInsets.all(8),
-                        child: ListView.builder(
+                        child: ReorderableListView.builder(
                           itemCount: notes.length,
                           itemBuilder: (context, index) {
-                            TextEditingController noteController = TextEditingController(text: notes[index]);
+                            Note note = notes[index];
+                            TextEditingController noteController = TextEditingController(text: note.id);
 
                             return Container(
+                              key: Key('$index'),
                               decoration: BoxDecoration(
-                                color: _randomColor.randomColor(),
+                                color: note.backgroundColor,
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                               padding: EdgeInsets.all(12),
@@ -359,15 +514,17 @@ class _MyHomePageState extends State<MyHomePage> {
                                     child: TextFormField(
                                       controller: noteController,
                                       onChanged: (value) {
-                                        notes[index] = value;
-                                        saveNotes();
+                                        setState(() {
+                                          note.id = value;
+                                          saveNotes();
+                                        });
                                       },
                                       style: TextStyle(
                                         fontSize: 15,
                                         color: Colors.black,
                                       ),
-                                      maxLines: null, 
-                                      textAlign: TextAlign.start, 
+                                      maxLines: null,
+                                      textAlign: TextAlign.start,
                                       decoration: InputDecoration(
                                         border: InputBorder.none,
                                         hintText: 'Ecrire ici...',
@@ -389,11 +546,21 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                   ReorderableDragStartListener(
                                     index: index,
-                                    child: Icon(Icons.drag_handle),
+                                    child: Icon(Icons.drag_handle_rounded),
                                   ),
                                 ],
                               ),
                             );
+                          },
+                          onReorder: (oldIndex, newIndex) {
+                            setState(() {
+                              if (newIndex > oldIndex) {
+                                newIndex -= 1;
+                              }
+                              final item = notes.removeAt(oldIndex);
+                              notes.insert(newIndex, item);
+                              saveNotes();
+                            });
                           },
                         ),
                       ),
@@ -503,7 +670,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: ElevatedButton(
                             onPressed: () {
                               setState(() {
-                                notes.add('Nouvelle note');
+                                notes.add(
+                                  Note(
+                                    id: 'Nouvelle note',
+                                    position: Offset(5.5, 5.5),
+                                    text: 'Contenu de la note'));
                                 saveNotes();
                               });
                             },
@@ -523,14 +694,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         height: 360,
                         width: 91,
                         padding: EdgeInsets.all(8),
-                        child: ListView.builder(
+                        child: ReorderableListView.builder(
                           itemCount: notes.length,
                           itemBuilder: (context, index) {
-                            TextEditingController noteController = TextEditingController(text: notes[index]);
+                            Note note = notes[index];
+                            TextEditingController noteController = TextEditingController(text: note.id);
 
                             return Container(
+                              key: Key('$index'),
                               decoration: BoxDecoration(
-                                color: _randomColor.randomColor(),
+                                color: note.backgroundColor,
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                               padding: EdgeInsets.all(12),
@@ -541,15 +714,17 @@ class _MyHomePageState extends State<MyHomePage> {
                                     child: TextFormField(
                                       controller: noteController,
                                       onChanged: (value) {
-                                        notes[index] = value;
-                                        saveNotes();
+                                        setState(() {
+                                          note.id = value;
+                                          saveNotes();
+                                        });
                                       },
                                       style: TextStyle(
                                         fontSize: 5,
                                         color: Colors.black,
                                       ),
-                                      maxLines: null, 
-                                      textAlign: TextAlign.start, 
+                                      maxLines: null,
+                                      textAlign: TextAlign.start,
                                       decoration: InputDecoration(
                                         border: InputBorder.none,
                                         hintText: 'Ecrire ici...',
@@ -569,9 +744,23 @@ class _MyHomePageState extends State<MyHomePage> {
                                       },
                                     ),
                                   ),
+                                  ReorderableDragStartListener(
+                                    index: index,
+                                    child: Icon(Icons.drag_handle_rounded),
+                                  ),
                                 ],
                               ),
                             );
+                          },
+                          onReorder: (oldIndex, newIndex) {
+                            setState(() {
+                              if (newIndex > oldIndex) {
+                                newIndex -= 1;
+                              }
+                              final item = notes.removeAt(oldIndex);
+                              notes.insert(newIndex, item);
+                              saveNotes();
+                            });
                           },
                         ),
                       ),
@@ -612,7 +801,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: ElevatedButton(
                             onPressed: () {
                               setState(() {
-                                notes.add('Nouvelle note');
+                                notes.add(
+                                  Note(
+                                    id: 'Nouvelle note',
+                                    position: Offset(5.5, 5.5),
+                                    text: 'Contenu de la note'));
                                 saveNotes(); // Enregistrer la note ajoutée
                               });
                             },
@@ -632,27 +825,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         height: 360,
                         width: 270,
                         padding: EdgeInsets.all(8),
-                        child: ReorderableListView(
-                          padding: EdgeInsets.zero,
-                          onReorder: (oldIndex, newIndex) {
-                            setState(() {
-                              if (newIndex > oldIndex) {
-                                newIndex -= 1;
-                              }
-                              final item = notes.removeAt(oldIndex);
-                              notes.insert(newIndex, item);
-                              saveNotes();
-                            });
-                          },
-                          children: notes.asMap().entries.map((entry) {
-                            int index = entry.key;
-                            String note = entry.value;
-                            TextEditingController noteController = TextEditingController(text: note);
+                        child: ReorderableListView.builder(
+                          itemCount: notes.length,
+                          itemBuilder: (context, index) {
+                            Note note = notes[index];
+                            TextEditingController noteController = TextEditingController(text: note.id);
 
                             return Container(
                               key: Key('$index'),
                               decoration: BoxDecoration(
-                                color: _randomColor.randomColor(),
+                                color: note.backgroundColor,
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                               padding: EdgeInsets.all(12),
@@ -663,8 +845,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                     child: TextFormField(
                                       controller: noteController,
                                       onChanged: (value) {
-                                        notes[index] = value;
-                                        saveNotes();
+                                        setState(() {
+                                          note.id = value;
+                                          saveNotes();
+                                        });
                                       },
                                       style: TextStyle(
                                         fontSize: 14,
@@ -675,7 +859,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       decoration: InputDecoration(
                                         border: InputBorder.none,
                                         hintText: 'Ecrire ici...',
-                                        contentPadding: EdgeInsets.zero,
+                                        contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 0),
                                       ),
                                     ),
                                   ),
@@ -693,12 +877,22 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                   ReorderableDragStartListener(
                                     index: index,
-                                    child: Icon(Icons.drag_handle),
+                                    child: Icon(Icons.drag_handle_rounded),
                                   ),
                                 ],
                               ),
                             );
-                          }).toList(),
+                          },
+                          onReorder: (oldIndex, newIndex) {
+                            setState(() {
+                              if (newIndex > oldIndex) {
+                                newIndex -= 1;
+                              }
+                              final item = notes.removeAt(oldIndex);
+                              notes.insert(newIndex, item);
+                              saveNotes();
+                            });
+                          },
                         ),
                       ),
                     ],
