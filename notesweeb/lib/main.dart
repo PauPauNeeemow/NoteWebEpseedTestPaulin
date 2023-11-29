@@ -4,23 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Note {
+  String title;
   String text;
-  final double size;
+  double size;
   final Color color;
   Offset position;
   late TextEditingController textEditingController;
+  late TextEditingController titleEditingController;
 
   Note({
+    required this.title,
     required this.text,
     required this.size,
     required this.color,
     required this.position,
   }) {
-    textEditingController = TextEditingController(text: text);
+    textEditingController = TextEditingController(text: 'Text');
+    titleEditingController = TextEditingController(text: 'Titre : ');
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'title': title,
       'text': text,
       'size': size,
       'color': color.value,
@@ -31,6 +36,7 @@ class Note {
 
   factory Note.fromJson(Map<String, dynamic> json) {
     return Note(
+      title: json['title'],
       text: json['text'],
       size: json['size'],
       color: Color(json['color']),
@@ -75,24 +81,77 @@ class _ResponsivePageState extends State<ResponsivePage> {
     setState(() {
       double size = 200.0;
       Color color = Colors.primaries[Random().nextInt(Colors.primaries.length)];
-      notes.add(Note(text: '', size: size, color: color, position: Offset.zero));
+      notes.add(Note(title: '', text: '', size: size, color: color, position: Offset.zero));
       saveNotes();
     });
   }
 
   Widget buildNote(Note note, int index) {
-    double touchAreaSize = 20.0;
+    double touchAreaSize = 15.0;
 
     return Positioned(
       left: note.position.dx,
       top: note.position.dy,
       child: Stack(
         children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12.0),
+            child: Container(
+              width: note.size,
+              height: note.size,
+              color: note.color,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextField(
+                    controller: note.titleEditingController,
+                    onChanged: (value) {
+                      setState(() {
+                        notes[index].title = value;
+                        saveNotes();
+                      });
+                    },
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Center(
+                    child: TextField(
+                      controller: note.textEditingController,
+                      onChanged: (value) {
+                        setState(() {
+                          notes[index].text = value;
+                          saveNotes();
+                        });
+                      },
+                      style: const TextStyle(
+                        color: Color.fromRGBO(0, 0, 0, 1.0),
+                        fontFamily: 'Nunito',
+                        fontSize: 20,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: null,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           Positioned(
-            left: -touchAreaSize / 2,
-            top: -touchAreaSize / 2,
-            width: note.size + touchAreaSize,
-            height: note.size + touchAreaSize,
+            left: 10,
+            top: 10,
+            width: touchAreaSize,
+            height: touchAreaSize,
             child: GestureDetector(
               onPanUpdate: (details) {
                 setState(() {
@@ -101,46 +160,29 @@ class _ResponsivePageState extends State<ResponsivePage> {
                 });
               },
               behavior: HitTestBehavior.translucent,
-              child: Container(),
+              child: Icon(Icons.open_with),
             ),
           ),
-          GestureDetector(
-            onPanUpdate: (details) {
-              setState(() {
-                notes[index].position += details.delta;
-                saveNotes();
-              });
-            },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12.0),
-              child: Container(
-                width: note.size,
-                height: note.size,
-                color: note.color,
-                child: Center(
-                  child: TextField(
-                    controller: note.textEditingController,
-                    onChanged: (value) {
-                      setState(() {
-                        notes[index].text = value;
-                        saveNotes();
-                      });
-                    },
-                    style: const TextStyle(
-                      color: Color.fromRGBO(0, 0, 0, 1.0), 
-                      fontFamily: 'Nunito', 
-                      fontSize: 20,
-                    ),
-                    textAlign: TextAlign.start,
-                    maxLines: null,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                    ),
-                  )
+          if (note.position == notes[index].position)
+            Positioned(
+              right: 10,
+              bottom: 10,
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  setState(() {
+                    notes[index].size += details.delta.dx;
+                    saveNotes();
+                  });
+                },
+                behavior: HitTestBehavior.translucent,
+                child: Container(
+                  width: touchAreaSize,
+                  height: touchAreaSize,
+                  color: Colors.transparent,
+                  child: Icon(Icons.open_in_full),
                 ),
               ),
             ),
-          ),
           Positioned(
             top: 0,
             right: 0,
@@ -201,10 +243,10 @@ class _ResponsivePageState extends State<ResponsivePage> {
           AnimatedPositioned(
             duration: Duration(milliseconds: 1000),
             curve: Curves.easeInOut,
-            bottom: isVisibleNotes ? 85 : 0,
-            left: 200,
-            right: 80,
-            top: isVisibleNotes ? 85 : MediaQuery.of(context).size.height,
+            bottom: isVisibleNotes ? 30 : 0,
+            left: 190,
+            right: 30,
+            top: isVisibleNotes ? 30 : MediaQuery.of(context).size.height,
             child: Container(
               decoration: BoxDecoration(
                 color: Color.fromRGBO(255, 255, 254, 1.0),
@@ -344,6 +386,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.deepPurple),
       ),
       home: const ResponsivePage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
