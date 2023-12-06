@@ -34,7 +34,7 @@ Flutter: Veuillez vous assurer d'avoir Flutter installé sur votre système pour
 
 Clonez ce dépôt : git clone <git@github.com:PauPauNeeemow/NoteWebEpseedTest.git>.
 
-Accédez au répertoire du projet : cd NoteWebEpseedTest/notesweeb.
+Accédez au répertoire du projet : cd NotesWebSite/notesweeb.
 
 Exécutez l'application : flutter run / F5.
 
